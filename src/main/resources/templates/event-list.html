@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+		  integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+		  crossorigin="anonymous">
+	<title>My events</title>
+</head>
+<body>
+<nav th:replace="fragments/nav :: nav"></nav>
+
+<div class="container">
+
+	<div>
+		<h2>Events made by me:</h2>
+	</div>
+	<table class="table">
+		<thead>
+		<tr>
+			<th scope="col">Date</th>
+			<th scope="col">Participants</th>
+			<th scope="col"></th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr th:if="${myEvents.isEmpty()}">
+			<td colspan="3">You haven't made any events yet.</td>
+		</tr>
+		<tr th:each="event : ${myEvents}">
+			<td>
+			<span th:text="${event.dateString}"></span></td>
+			<td><span th:text="${event.participants.isEmpty()} ? '0' : ${event.participants.size()}"></span></td>
+			<td>
+				<form th:action="@{'/event/' + ${event.id}}" method="get">
+					<input class="btn btn-secondary btn-m mx-auto" type="submit" value="Details"/>
+				</form>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+
+	<div>
+		<h2>Events made by others:</h2>
+	</div>
+	<table class="table">
+		<thead>
+		<tr>
+			<th scope="col">Date</th>
+			<th scope="col">Participants</th>
+			<th scope="col"></th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr th:if="${otherEvents.isEmpty()}">
+			<td colspan="3">There are no events that you are invited to. Get better friends.</td>
+		</tr>
+		<tr th:each="event : ${otherEvents}">
+			<td><span th:text="${event.dateString}"></span></td>
+			<td><span th:text="${event.participants.isEmpty()} ? '0' : ${event.participants.size()}"></span></td>
+			<td>
+				<form th:action="@{'/event/' + ${event.id}}" method="get">
+					<input class="btn btn-secondary btn-m mx-auto" type="submit" value="Details"/>
+				</form>
+			</td>
+		</tr>
+		</tbody>
+	</table>
+
+</div>
+
+<div th:replace="fragments/dependencies :: scripts"></div>
+</body>
+</html>

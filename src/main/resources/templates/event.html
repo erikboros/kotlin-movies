@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+		  integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+		  crossorigin="anonymous">
+	<meta name="eventId" th:content="${event.id}">
+	<meta name="usertId" th:content="${userId}">
+	<title>Event details</title>
+</head>
+<body>
+<nav th:replace="fragments/nav :: nav"></nav>
+
+<div class="container">
+
+	<h1>Event details</h1>
+	<hr>
+
+	<div class="row">
+		<div class="col-xl-6 col-l-12">
+			<p><span>Date:</span> <span th:text="${event.dateTimeString}"></span></p>
+			<p><span>Organiser:</span> <span
+					th:text="${event.organiser.firstname} + ' ' +${event.organiser.lastname}"></span>
+		</div>
+		<div class="col-xl-6 col-l-12">
+			<h4>Participants</h4>
+			<p>
+				<span th:each="user : ${event.participants}"
+					  th:text="${user.firstname + ' ' + user.lastname} + ', '"></span>
+			</p>
+		</div>
+	</div>
+
+	<hr>
+
+	<div class="row">
+		<div class="col-l-12 col-xl-6">
+			<h4>Movie options</h4>
+			<ul class="list-group" id="movies"></ul>
+		</div>
+		<div class="col-l-12 col-xl-6">
+			<h4>Add movie option</h4>
+			<div class="input-group mb-3">
+				<input id="newMovieInput" type="text" class="form-control" placeholder="Movie Title"
+					   aria-label="Movie Title"
+					   aria-describedby="basic-addon1">
+				<div class="input-group-append">
+					<button class="btn btn-outline-secondary" id="newMovieButton" type="button">Add Movie
+					</button>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</div>
+<div th:replace="fragments/dependencies :: scripts"></div>
+<script>
+	$(document).ready(function () {
+		fetchMoviesList();
+		$("#newMovieButton").click(submitNewMovie);
+	});
+
+	var eventId = $('meta[name=eventId]').attr("content");
+	var movies = [];
+
+	function fetchMoviesList() {
+		$.ajax({
+			url: "/event/" + eventId + "/movies",
+			type: "GET",
+			dataType: "json",
+			contentType: "application/json",
+			async: true,
+			success: function (data) {
+				movies = data;
+				renderMoviesList();
+			}
+		});
+	}
+
+	function renderMoviesList() {
+
+		function voterNames(movie) {
+			var voterNames = "";
+			for (let i = 0; i < movie.voters.length; i++) {
+				voterNames = voterNames
+					.concat(movie.voters[i].firstname)
+					// .concat(" ")
+					// .concat(movie.voters[i].lastname)
+					.concat(", ");
+			}
+			return voterNames
+		}
+
+		$("#movies").html("");
+
+		for (let i = 0; i < movies.length; i++) {
+
+			$("#movies").append(
+				$('<li class="list-group-item d-flex justify-content-between align-items-center ' + (movies[i].maxVotes ? 'list-group-item-success' : '') + '">').append(
+					$('<span>').text(movies[i].title),
+					$('<span class="badge badge-primary badge-pill" data-toggle="tooltip" data-toggle="tooltip" title="' + voterNames(movies[i]) + '">').text(movies[i].voters.length),
+					$('<input id="check-' + movies[i].id.toString() + '" style="float: right" type="checkbox" aria-label="Checkbox for following text input" ' + (movies[i].ivoted ? 'checked' : '') + '>')
+						.click(checkBoxHandler)
+				)
+			)
+		}
+		$('[data-toggle="tooltip"]').tooltip()
+	}
+
+	function checkBoxHandler() {
+		let checkbox = $(this);
+		let id = checkbox.attr('id').toString().split("-")[1];
+
+		let url;
+		if (checkbox.is(":checked")) {
+			url = "/event/" + eventId + "/vote-movie/" + id;
+		} else {
+			url = "/event/" + eventId + "/detach-movie/" + id;
+		}
+
+		$.ajax({
+			url: url,
+			type: "GET",
+			dataType: "json",
+			contentType: "application/json",
+			async: true,
+			success: function (data) {
+				movies = data;
+				renderMoviesList();
+			}
+		});
+
+	}
+
+	function submitNewMovie() {
+		var title = $("#newMovieInput").val().toString();
+		if (title == "") {
+			return
+		}
+
+		var newMovie = {
+			title: title
+		};
+
+		$.ajax({
+			url: "/new-movie/" + eventId,
+			type: "POST",
+			contentType: "application/json",
+			data: JSON.stringify(newMovie),
+			async: true,
+			success: function (data) {
+				$("#newMovieInput").val("");
+				fetchMoviesList()
+			}
+		})
+	}
+
+</script>
+</body>
+</html>
